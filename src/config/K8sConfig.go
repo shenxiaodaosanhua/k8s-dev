@@ -1,12 +1,16 @@
 package config
 
 import (
+	"k8s-dev/core"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"log"
 )
 
 type K8sConfig struct {
+	DepHandler *core.DepHandler `inject:"-"`
 }
 
 func NewK8sConfig() *K8sConfig {
@@ -25,4 +29,15 @@ func (c *K8sConfig) InitClient() *kubernetes.Clientset {
 	}
 
 	return client
+}
+
+func (c *K8sConfig) InitInformer() informers.SharedInformerFactory {
+	fact := informers.NewSharedInformerFactory(c.InitClient(), 0)
+
+	depInformer := fact.Apps().V1().Deployments()
+	depInformer.Informer().AddEventHandler(c.DepHandler)
+
+	fact.Start(wait.NeverStop)
+
+	return fact
 }

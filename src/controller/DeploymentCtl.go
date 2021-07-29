@@ -3,12 +3,13 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/shenyisyn/goft-gin/goft"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s-dev/core"
 	"k8s.io/client-go/kubernetes"
 )
 
 type DeploymentCtl struct {
 	K8sClient *kubernetes.Clientset `inject:"-"`
+	DepMap    *core.DeploymentMap   `inject:"-"`
 }
 
 func NewDeploymentCtl() *DeploymentCtl {
@@ -16,10 +17,7 @@ func NewDeploymentCtl() *DeploymentCtl {
 }
 
 func (c *DeploymentCtl) index(ctx *gin.Context) goft.Json {
-	list, err := c.K8sClient.
-		AppsV1().
-		Deployments("myweb").
-		List(ctx, metav1.ListOptions{})
+	list, err := c.DepMap.ListByNs("myweb")
 	goft.Error(err)
 	return list
 }
